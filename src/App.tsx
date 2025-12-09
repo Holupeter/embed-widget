@@ -8,12 +8,29 @@ interface AppProps {
 }
 
 export default function App({ shadowRoot }: AppProps) {
-  const [index, setIndex] = useState(0);
+  // 1. Initialize state from LocalStorage (if it exists)
+const [index, setIndex] = useState(() => {
+  try {
+    const saved = localStorage.getItem('onboard_tour_step');
+    console.log("Reading from memory:", saved); // Check Console!
+    return saved ? parseInt(saved, 10) : 0;
+  } catch (e) {
+    console.warn("Storage access failed:", e);
+    return 0;
+  }
+});
+
+
   const [coords, setCoords] = useState({ x: 0, y: 0 });
   const [isVisible, setIsVisible] = useState(true);
 
   const step = MOCK_TOUR.steps[index];
   const isLast = index === MOCK_TOUR.steps.length - 1;
+
+  useEffect(() => {
+  console.log("Saving step:", index); // Check Console!
+  localStorage.setItem('onboard_tour_step', index.toString());
+}, [index]);
 
   useEffect(() => {
     if (!step) return;
@@ -54,12 +71,14 @@ export default function App({ shadowRoot }: AppProps) {
   }, [shadowRoot, index]);
 
   const next = () => {
-    if (isLast) {
-      setIsVisible(false);
-    } else {
-      setIndex(prev => prev + 1);
-    }
-  };
+  if (isLast) {
+    setIsVisible(false);
+    localStorage.removeItem('onboard_tour_step');
+    alert("Tour Finished!"); 
+  } else {
+    setIndex(prev => prev + 1);
+  }
+};
 
   if (!isVisible) return null;
 
@@ -87,9 +106,9 @@ export default function App({ shadowRoot }: AppProps) {
           exit={{ opacity: 0, scale: 0.9 }}
           transition={{ 
             type: "spring", 
-            stiffness: 260, 
-            damping: 20, 
-            mass: 0.5 
+            stiffness: 80,  // Much softer pull
+            damping: 20,    // Smooth braking
+            mass: 1         // Heavier feel
           }}
           style={{ 
             position: 'absolute', 
