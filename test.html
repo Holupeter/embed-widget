@@ -2,29 +2,72 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Embed Test</title>
+    <title>Widget Test (5 Steps)</title>
     <style>
-        body { padding: 50px; font-family: sans-serif; background: #f3f4f6; height: 200vh; }
-        .target { padding: 15px 25px; border-radius: 8px; color: white; cursor: pointer; }
+        body { padding: 50px; font-family: sans-serif; background: #f4f4f5; height: 200vh; }
+        
+        /* Targets */
+        #signup-btn {
+            background: #2563eb; color: white; padding: 12px 24px; 
+            border: none; border-radius: 6px; cursor: pointer; font-size: 16px;
+        }
+        
+        #feature-section {
+            margin-top: 300px; padding: 40px; background: white; 
+            border: 1px dashed #ccc; width: 200px; text-align: center;
+        }
+
+        #pricing-plan {
+            margin-top: 300px; padding: 20px; background: #059669; 
+            color: white; display: inline-block; border-radius: 8px;
+        }
+
+        /* NEW STYLES FOR STEP 4 & 5 */
+        .sidebar {
+            position: fixed; top: 50px; right: 0; width: 60px; height: 300px; background: #ddd;
+            display: flex; flex-direction: column; align-items: center; padding-top: 20px;
+        }
+        #settings-icon {
+            width: 40px; height: 40px; background: #555; border-radius: 50%; 
+            color: white; display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+        }
+        
+        #help-footer {
+            margin-top: 400px; text-align: center; border-top: 1px solid #ccc; padding-top: 20px;
+        }
+        #help-btn {
+            background: #e11d48; color: white; padding: 10px 20px; border-radius: 20px;
+            text-decoration: none; display: inline-block;
+        }
     </style>
 </head>
 <body>
-    <h1>Testing Your Widget</h1>
-    
-    <button id="signup-btn" class="target" style="background: #2563eb;">Sign Up</button>
 
-    <div style="height: 300px;"></div>
+    <h1>5-Step Tour Test</h1>
+    <p>Testing persistence and 5-step flow.</p>
 
-    <div style="text-align: right;">
-        <span id="features-section" class="target" style="background: #059669;">Cool Features</span>
+    <button id="signup-btn">Sign Up Now</button>
+
+    <div class="sidebar">
+        <div id="settings-icon">⚙️</div>
     </div>
 
-    <div style="height: 300px;"></div>
+    <div align="right">
+        <div id="feature-section">
+            <strong>New Features</strong>
+        </div>
+    </div>
 
-    <div id="pricing-card" class="target" style="background: #7c3aed; display: inline-block;">
-        Pricing Plan
+    <div id="pricing-plan">
+        Premium Plan ($29/mo)
+    </div>
+
+    <div id="help-footer">
+        <a href="#" id="help-btn">Contact Support</a>
     </div>
 
     <script src="./dist/embed.js"></script>
+
 </body>
 </html>

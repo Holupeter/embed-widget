@@ -1,26 +1,36 @@
 export const MOCK_TOUR = {
-  tourId: "tour_demo",
+  tourId: "demo-tour",
   steps: [
     {
-      step: 1,
-      targetId: "#signup-btn", // We will put this ID in our test file
-      title: "👋 Welcome!",
-      description: "Click here to create an account.",
+      targetId: "#signup-btn",
+      title: "👋 Welcome to HNG",
+      description: "Click here to create your account and get started.",
       position: "bottom"
     },
     {
-      step: 2,
-      targetId: "#features-section",
-      title: "🚀 Features",
-      description: "Check out what our tool can do.",
+      targetId: "#feature-section",
+      title: "🚀 Powerful Features",
+      description: "Explore our new dashboard analytics here.",
       position: "right"
     },
     {
-      step: 3,
-      targetId: "#pricing-card",
-      title: "💰 Pricing",
-      description: "Start for free, upgrade anytime.",
+      targetId: "#pricing-plan",
+      title: "💎 Pricing",
+      description: "Choose a plan that fits your team's needs.",
+      position: "top"
+    },
+    // --- NEW STEPS ---
+    {
+      targetId: "#settings-icon",
+      title: "⚙️ Customization",
+      description: "Configure your profile and preferences in settings.",
       position: "left"
+    },
+    {
+      targetId: "#help-btn",
+      title: "❓ Need Help?",
+      description: "Click here anytime to contact our 24/7 support team.",
+      position: "bottom"
     }
   ]
 };
