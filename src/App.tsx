@@ -1,13 +1,18 @@
 import { useEffect, useState } from 'react';
 import { computePosition, flip, shift, offset } from '@floating-ui/dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MOCK_TOUR } from './mockData';
+import { useTourData } from './useTourData';
 
 interface AppProps {
   shadowRoot: ShadowRoot;
+  tourId: string;
 }
 
-export default function App({ shadowRoot }: AppProps) {
+export default function App({ shadowRoot, tourId }: AppProps) {
+  // 1. Get Data via Hook (Mock or Real)
+  const tourData = useTourData(tourId);
+
+  // 2. Initialize State
   const [index, setIndex] = useState(() => {
     try {
       const saved = localStorage.getItem('tour_progress');
@@ -20,11 +25,17 @@ export default function App({ shadowRoot }: AppProps) {
   const [coords, setCoords] = useState({ x: 0, y: 0 });
   const [isVisible, setIsVisible] = useState(true);
 
-  const step = MOCK_TOUR.steps[index];
-  const isLast = index === MOCK_TOUR.steps.length - 1;
-  // Calculate progress percentage (e.g., 1/5 = 20%)
-  const progress = ((index + 1) / MOCK_TOUR.steps.length) * 100;
+  // 3. GUARD CLAUSE (Crucial)
+  // We must check if data exists before trying to read 'steps'.
+  // If tourData is loading or empty, we show nothing.
+  if (!tourData || !tourData.steps) return null;
 
+  // 4. DEFINE VARIABLES (Only once!)
+  const step = tourData.steps[index];
+  const isLast = index === tourData.steps.length - 1;
+  const progress = ((index + 1) / tourData.steps.length) * 100;
+
+  // 5. EFFECTS
   useEffect(() => {
     localStorage.setItem('tour_progress', index.toString());
   }, [index]);
@@ -54,7 +65,13 @@ export default function App({ shadowRoot }: AppProps) {
       window.removeEventListener('resize', updatePosition);
       window.removeEventListener('scroll', updatePosition);
     };
-  }, [shadowRoot, index]);
+  }, [shadowRoot, index, step]); // Added 'step' to dependency array for safety
+
+  // 6. HANDLERS
+  const finishTour = () => {
+    setIsVisible(false);
+    localStorage.removeItem('tour_progress');
+  };
 
   const next = () => {
     if (isLast) {
@@ -62,11 +79,6 @@ export default function App({ shadowRoot }: AppProps) {
     } else {
       setIndex(prev => prev + 1);
     }
-  };
-
-  const finishTour = () => {
-    setIsVisible(false);
-    localStorage.removeItem('tour_progress');
   };
 
   if (!isVisible) return null;

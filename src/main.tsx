@@ -3,44 +3,32 @@ import ReactDOM from 'react-dom/client';
 import App from './App';
 import './index.css';
 
-const WIDGET_ID = 'onboardjs-tour-widget';
+const WIDGET_ID = 'onboardjs-widget';
 
-function mountWidget() {
-  // Prevent duplicate injections
+function mount() {
   if (document.getElementById(WIDGET_ID)) return;
 
-  // 1. Create the container
-  const widgetHost = document.createElement('div');
-  widgetHost.id = WIDGET_ID;
-  document.body.appendChild(widgetHost);
+  // 1. INTELLIGENT CONFIGURATION
+  // We look for the script tag that loaded this file
+  const currentScript = document.currentScript as HTMLScriptElement;
+  // If the user wrote <script src="..." data-tour-id="123">, we grab "123"
+  const tourId = currentScript?.getAttribute('data-tour-id') || 'demo-tour';
 
-  // 2. Create the Shadow DOM (The Firewall)
-  const shadowRoot = widgetHost.attachShadow({ mode: 'open' });
+  const container = document.createElement('div');
+  container.id = WIDGET_ID;
+  document.body.appendChild(container);
 
-  // 3. Create the React Root inside Shadow DOM
-  const appRoot = document.createElement('div');
-  appRoot.id = 'root';
-  shadowRoot.appendChild(appRoot);
+  const shadow = container.attachShadow({ mode: 'open' });
+  const root = document.createElement('div');
+  shadow.appendChild(root);
 
-  // 4. Render React
-  ReactDOM.createRoot(appRoot).render(
+  ReactDOM.createRoot(root).render(
     <React.StrictMode>
-      <App shadowRoot={shadowRoot} />
+      {/* Pass the ID to the App */}
+      <App shadowRoot={shadow} tourId={tourId} />
     </React.StrictMode>
   );
 }
 
-// Auto-start
-if (document.readyState === 'complete') {
-  mountWidget();
-} else {
-  window.addEventListener('load', mountWidget);
-}
-
-// Typing for TypeScript
-declare global {
-  interface Window {
-    initTourWidget: () => void;
-  }
-}
-window.initTourWidget = mountWidget;
+if (document.readyState === 'complete') mount();
+else window.addEventListener('load', mount);
