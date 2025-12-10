@@ -6,11 +6,11 @@ import { useTourData } from './useTourData';
 interface AppProps {
   shadowRoot: ShadowRoot;
   tourId: string;
-  apiKey?: string; // Added apiKey prop
+  apiKey?: string;
 }
 
 export default function App({ shadowRoot, tourId, apiKey }: AppProps) {
-  const tourData = useTourData(tourId, apiKey);
+  const { tourData, isValidApiKey } = useTourData(tourId, apiKey);
 
   // --- STATE ---
   const [index, setIndex] = useState(() => {
@@ -25,7 +25,15 @@ export default function App({ shadowRoot, tourId, apiKey }: AppProps) {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [targetRect, setTargetRect] = useState({ top: 0, left: 0, width: 0, height: 0 });
 
-  // Guard Clause
+  if (isValidApiKey === false) {
+    return (
+      <div style={{ padding: '20px', backgroundColor: '#fee2e2', color: '#dc2626', borderRadius: '8px', fontFamily: 'sans-serif' }}>
+        <strong>Error:</strong> Invalid API Key. Please check your configuration.
+      </div>
+    );
+  }
+
+  // Guard Clause for loading state or no tour data
   if (!tourData || !tourData.steps) return null;
 
   const step = tourData.steps[index];

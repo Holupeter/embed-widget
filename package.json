@@ -12,6 +12,7 @@
   "dependencies": {
     "@floating-ui/dom": "^1.7.4",
     "clsx": "^2.1.1",
+    "convex": "^1.30.0",
     "framer-motion": "^12.23.25",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",

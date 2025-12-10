@@ -1,0 +1,5 @@
+Your Convex database already has data in it, likely from previous development. The schema validation error occurs because an existing 'tours' document has a `userId` field that isn't defined in our new schema.
+
+While you can delete data from the Convex dashboard, the recommended and safest approach is to update the schema to accommodate the existing data. This is a common process when evolving an application.
+
+I will add the `userId` field to the `tours` table in `schema.ts`. After that, running `npx convex dev` should succeed.

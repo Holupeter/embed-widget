@@ -14,7 +14,7 @@ export default defineConfig({
         manualChunks: undefined,
         entryFileNames: 'embed.js', // The final output name
         format: 'iife', // Safe format for browsers
-        name: 'TourWidget',
+        name: 'WalkmanJS',
       },
     },
   },

@@ -1,106 +1,76 @@
-import { useState } from 'react'; // FIXED: Removed 'useEffect'
+import { useState, useEffect } from 'react';
+import { useQuery } from 'convex/react';
+import { api } from '../convex/_generated/api';
+import { Doc, Id } from '../convex/_generated/dataModel';
 
-// --- DATA STRUCTURES (MATCHING THE DOCS) ---
-
-export interface Step {
-  _id: string;
-  tourId: string;
-  stepId: string;
-  title: string;
-  content: string;
-  targetSelector: string;
-  position: "top" | "bottom" | "left" | "right";
-  order: number;
+// The full TourConfig, including steps. This is constructed from Doc<'tours'> and Doc<'steps'>[]
+export interface TourConfig extends Doc<'tours'> {
+    steps: Doc<'steps'>[];
 }
 
-export interface TourConfig {
-  _id: string;
-  name: string;
-  status: "draft" | "active" | "paused";
-  theme: {
-    primaryColor: string;
-    backgroundColor: string;
-    textColor: string;
-    borderRadius: number;
-    overlayEnabled: boolean;
-    overlayOpacity: number;
-  };
-  targeting: {
-    urlMatchType: "exact" | "contains" | "regex";
-    urlPattern: string;
-    frequency: "once" | "session" | "always";
-  };
-  steps: Step[];
-}
+export function useTourData(tourId: string, apiKey?: string) {
+    const [data, setData] = useState<TourConfig | null>(null);
+    const [isValidApiKeyStatus, setIsValidApiKeyStatus] = useState<boolean | null>(null);
 
-// --- MOCK DATA ---
-const MOCK_DATA: TourConfig = {
-  _id: "demo-tour-123",
-  name: "Onboarding Demo",
-  status: "active",
-  theme: {
-    primaryColor: "#2563eb",
-    backgroundColor: "#ffffff",
-    textColor: "#1e293b",
-    borderRadius: 16,
-    overlayEnabled: true,
-    overlayOpacity: 0.5
-  },
-  targeting: {
-    urlMatchType: "contains",
-    urlPattern: "/",
-    frequency: "always"
-  },
-  steps: [
-    { _id: "s1", tourId: "t1", stepId: "step_1", order: 0, title: "👋 Welcome", content: "Start your journey here.", targetSelector: "#signup-btn", position: "bottom" },
-    { _id: "s2", tourId: "t1", stepId: "step_2", order: 1, title: "📊 Analytics", content: "Track your growth.", targetSelector: "#feature-section", position: "right" },
-    { _id: "s3", tourId: "t1", stepId: "step_3", order: 2, title: "💎 Pricing", content: "Choose a plan.", targetSelector: "#pricing-plan", position: "left" },
-    { _id: "s4", tourId: "t1", stepId: "step_4", order: 3, title: "⚙️ Settings", content: "Configure your profile.", targetSelector: "#settings-icon", position: "bottom" },
-    { _id: "s5", tourId: "t1", stepId: "step_5", order: 4, title: "❓ Support", content: "We are here to help.", targetSelector: "#help-btn", position: "top" }
-  ]
-};
+    const isKeyValid = useQuery(api.apiKeys.validate, apiKey ? { key: apiKey } : 'skip');
 
-// --- TEAM INSTRUCTIONS ---
-// 1. Uncomment Convex imports
-// 2. Uncomment 'useQuery', 'useEffect', and 'shouldShowTour' logic below
-// -------------------------
+    // Use as unknown as Id<'tours'> because tourId is a string from data-tour-id,
+    // but Convex's Id<'tours'> is a branded string type.
+    const tourIdAsId = tourId as unknown as Id<'tours'>;
+    const realTour = useQuery(api.tours.get, { tourId: tourIdAsId });
+    const realSteps = useQuery(api.steps.list, { tourId: tourIdAsId });
 
-// import { useQuery } from "convex/react";
-// import { api } from "../convex/_generated/api";
+    useEffect(() => {
+        if (isKeyValid !== undefined) {
+            setIsValidApiKeyStatus(isKeyValid);
+        }
 
-// FIXED: Added underscores to arguments so TS doesn't complain they are unused
-export function useTourData(_tourId: string, _apiKey?: string) {
-  
-  // FIXED: Removed 'setData' since we aren't using it in Mock Mode
-  const [data] = useState<TourConfig | null>(MOCK_DATA);
+        if (isKeyValid !== true) {
+            if (isKeyValid === false) console.error('WalkmanJS: Invalid API Key');
+            setData(null);
+            return;
+        }
 
-  // --- LOGIC: HELPER FUNCTIONS (Uncomment when switching to Real Data) ---
-  /*
-  const shouldShowTour = (targeting: any, currentUrl: string) => {
-    if (!targeting?.urlPattern) return true;
-    if (targeting.urlMatchType === "contains") return currentUrl.includes(targeting.urlPattern);
-    return true;
-  };
-  */
+        if (realTour && realSteps) {
+            // Check if targeting is explicitly null or undefined, and if so,
+            // construct the fullConfig without targeting, otherwise spread it.
+            const fullConfig: TourConfig = {
+                ...realTour,
+                steps: realSteps,
+            };
 
-  // --- LOGIC: REAL DATA FETCHING (Uncomment when Backend is ready) ---
-  /*
-  const realTour = useQuery(api.tours.get, { tourId: _tourId });
-  const realSteps = useQuery(api.steps.list, { tourId: _tourId });
+            // Only call shouldShowTour if targeting is defined on realTour, otherwise assume no targeting needed
+            if (!fullConfig.targeting || shouldShowTour(fullConfig.targeting, window.location.href)) {
+                setData(fullConfig);
+            } else {
+                console.log('WalkmanJS: Targeting rules not met for this URL.');
+                setData(null);
+            }
+        }
+    }, [isKeyValid, realTour, realSteps]);
 
-  // Note: Add 'useEffect' back to imports above
-  // Note: Add 'setData' back to useState above
-  
-  useEffect(() => {
-    if (realTour && realSteps) {
-       const fullConfig = { ...realTour, steps: realSteps };
-       
-       if (shouldShowTour(fullConfig.targeting, window.location.href)) {
-         setData(fullConfig);
-       }
-    }
-  }, [realTour, realSteps]);
-  */
+    // This function can be defined here or moved outside if it doesn't depend on hook state.
+    // It uses Doc<'tours'>['targeting'] type directly from the generated schema.
+    const shouldShowTour = (targeting: Doc<'tours'>['targeting'], currentUrl: string) => {
+        if (!targeting?.urlPattern) return true;
 
-  return data;
+        switch (targeting.urlMatchType) {
+            case 'exact':
+                return currentUrl === targeting.urlPattern;
+            case 'contains':
+                return currentUrl.includes(targeting.urlPattern);
+            case 'regex':
+                try {
+                    const regex = new RegExp(targeting.urlPattern);
+                    return regex.test(currentUrl);
+                } catch (e) {
+                    console.error('WalkmanJS: Invalid regex pattern provided:', targeting.urlPattern, e);
+                    return false;
+                }
+            default:
+                return false;
+        }
+    };
+
+    return { tourData: data, isValidApiKey: isValidApiKeyStatus };
 }
