@@ -9,10 +9,8 @@ interface AppProps {
 }
 
 export default function App({ shadowRoot, tourId }: AppProps) {
-  // 1. Get Data via Hook (Mock or Real)
   const tourData = useTourData(tourId);
 
-  // 2. Initialize State
   const [index, setIndex] = useState(() => {
     try {
       const saved = localStorage.getItem('tour_progress');
@@ -24,26 +22,36 @@ export default function App({ shadowRoot, tourId }: AppProps) {
 
   const [coords, setCoords] = useState({ x: 0, y: 0 });
   const [isVisible, setIsVisible] = useState(true);
+  
+  // 1. NEW: Track if we are on mobile
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
-  // 3. GUARD CLAUSE (Crucial)
-  // We must check if data exists before trying to read 'steps'.
-  // If tourData is loading or empty, we show nothing.
   if (!tourData || !tourData.steps) return null;
 
-  // 4. DEFINE VARIABLES (Only once!)
   const step = tourData.steps[index];
   const isLast = index === tourData.steps.length - 1;
   const progress = ((index + 1) / tourData.steps.length) * 100;
 
-  // 5. EFFECTS
   useEffect(() => {
     localStorage.setItem('tour_progress', index.toString());
   }, [index]);
 
   useEffect(() => {
+    // 2. NEW: Listen for screen resize to switch modes
+    const handleResize = () => {
+        setIsMobile(window.innerWidth < 768);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
     if (!step) return;
 
     const updatePosition = () => {
+      // 3. OPTIMIZATION: If mobile, don't waste CPU calculating positions
+      if (isMobile) return; 
+
       const target = document.querySelector(step.targetId);
       const tooltip = shadowRoot.getElementById('tour-card');
 
@@ -65,59 +73,78 @@ export default function App({ shadowRoot, tourId }: AppProps) {
       window.removeEventListener('resize', updatePosition);
       window.removeEventListener('scroll', updatePosition);
     };
-  }, [shadowRoot, index, step]); // Added 'step' to dependency array for safety
+  }, [shadowRoot, index, step, isMobile]);
 
-  // 6. HANDLERS
   const finishTour = () => {
     setIsVisible(false);
     localStorage.removeItem('tour_progress');
   };
 
   const next = () => {
-    if (isLast) {
-      finishTour();
-    } else {
-      setIndex(prev => prev + 1);
-    }
+    if (isLast) finishTour();
+    else setIndex(prev => prev + 1);
   };
 
   if (!isVisible) return null;
 
+  // 4. DYNAMIC STYLES: Switch between "Float" and "Bottom Sheet"
+  const desktopStyle = {
+    position: 'absolute' as const,
+    left: 0,
+    top: 0,
+    x: coords.x,
+    y: coords.y,
+    width: '320px',
+  };
+
+  const mobileStyle = {
+    position: 'fixed' as const,
+    left: '50%',
+    bottom: '20px',
+    x: '-50%', // Centers it horizontally
+    y: 0, // No vertical offset needed, it's pinned to bottom
+    width: '90vw', // 90% of screen width
+    maxWidth: '350px', // But never huge
+  };
+
   return (
     <>
       <style>{`
-        .btn { cursor: pointer; border: none; padding: 8px 16px; border-radius: 6px; font-weight: 600; font-size: 13px; transition: opacity 0.2s; }
+        .btn { cursor: pointer; border: none; padding: 10px 16px; border-radius: 8px; font-weight: 600; font-size: 14px; transition: opacity 0.2s; }
         .btn-primary { background: #111; color: white; }
         .btn-primary:hover { opacity: 0.9; }
         .btn-back { background: transparent; color: #666; }
         .btn-back:hover { background: #f0f0f0; }
-        .btn-skip { background: transparent; color: #999; font-size: 12px; margin-right: auto; }
+        .btn-skip { background: transparent; color: #999; font-size: 13px; margin-right: auto; }
         .btn-skip:hover { color: #666; }
         
-        /* Progress Bar Styles */
-        .progress-track { width: 100%; height: 4px; background: #f0f0f0; border-radius: 2px; margin-bottom: 16px; overflow: hidden; }
+        .progress-track { width: 100%; height: 4px; background: #f0f0f0; border-radius: 2px; margin-bottom: 20px; overflow: hidden; }
         .progress-fill { height: 100%; background: #2563eb; transition: width 0.3s ease; }
+        
+        h3 { margin: 0 0 10px; font-size: 18px; fontWeight: 700; }
+        p { margin: 0 0 24px; color: #666; lineHeight: 1.6; fontSize: 15px; }
       `}</style>
       
       <AnimatePresence mode='wait'>
         <motion.div 
           id="tour-card"
-          initial={{ opacity: 0, scale: 0.9, y: 10 }}
+          // 5. ANIMATION: Adjust entrance direction based on device
+          initial={{ opacity: 0, scale: 0.95, y: isMobile ? 50 : 10, x: isMobile ? '-50%' : 0 }}
           animate={{ 
-            opacity: 1, scale: 1, y: 0,
-            x: coords.x, 
-            top: coords.y,
+            opacity: 1, 
+            scale: 1, 
+            ...(isMobile ? mobileStyle : desktopStyle) // Apply the correct style object
           }}
-          exit={{ opacity: 0, scale: 0.9 }}
-          transition={{ type: "spring", stiffness: 80, damping: 20, mass: 1 }}
+          exit={{ opacity: 0, scale: 0.95, y: 10 }}
+          transition={{ type: "spring", stiffness: 100, damping: 20, mass: 1 }}
           style={{ 
-            position: 'absolute', left: 0, width: '320px',
-            background: '#fff', color: '#333', padding: '20px',
-            borderRadius: '16px', boxShadow: '0 20px 50px -10px rgba(0,0,0,0.15)',
-            fontFamily: 'system-ui, sans-serif', zIndex: 99999,
+            background: '#fff', color: '#333', padding: '24px',
+            borderRadius: '20px', 
+            boxShadow: '0 20px 60px -10px rgba(0,0,0,0.2)',
+            fontFamily: 'Inter, system-ui, sans-serif', 
+            zIndex: 99999,
           }}
         >
-          {/* PROGRESS BAR */}
           <div className="progress-track">
             <div className="progress-fill" style={{ width: `${progress}%` }}></div>
           </div>
@@ -129,16 +156,12 @@ export default function App({ shadowRoot, tourId }: AppProps) {
             exit={{ opacity: 0, x: -10 }}
             transition={{ duration: 0.2 }}
           >
-            <h3 style={{ margin: '0 0 8px', fontSize: '18px', fontWeight: 700 }}>{step.title}</h3>
-            <p style={{ margin: '0 0 20px', color: '#666', lineHeight: 1.5, fontSize: '14px' }}>{step.description}</p>
+            <h3>{step.title}</h3>
+            <p>{step.description}</p>
           </motion.div>
           
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              {/* SKIP BUTTON */}
-              <button className="btn btn-skip" onClick={finishTour}>
-                  Skip Tour
-              </button>
-
+              <button className="btn btn-skip" onClick={finishTour}>Skip</button>
               <button 
                   className="btn btn-back" 
                   onClick={() => setIndex(prev => prev - 1)}

@@ -3,7 +3,7 @@ export const MOCK_TOUR = {
   steps: [
     {
       targetId: "#signup-btn",
-      title: "👋 Welcome to HNG",
+      title: "👋 Welcome to Saasify",
       description: "Click here to create your account and get started.",
       position: "bottom"
     },
