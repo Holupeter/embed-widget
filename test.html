@@ -2,68 +2,154 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Widget Test (5 Steps)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HNG SaaS Dashboard Demo</title>
     <style>
-        body { padding: 50px; font-family: sans-serif; background: #f4f4f5; height: 200vh; }
-        
-        /* Targets */
-        #signup-btn {
-            background: #2563eb; color: white; padding: 12px 24px; 
-            border: none; border-radius: 6px; cursor: pointer; font-size: 16px;
-        }
-        
-        #feature-section {
-            margin-top: 300px; padding: 40px; background: white; 
-            border: 1px dashed #ccc; width: 200px; text-align: center;
+        /* RESET & BASE STYLES */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #f8fafc;
+            color: #334155;
+            height: 200vh; /* Make it scrollable */
         }
 
-        #pricing-plan {
-            margin-top: 300px; padding: 20px; background: #059669; 
-            color: white; display: inline-block; border-radius: 8px;
+        /* NAVBAR (Step 4 Target) */
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 40px;
+            background: white;
+            border-bottom: 1px solid #e2e8f0;
+            position: sticky;
+            top: 0;
+            z-index: 10;
         }
-
-        /* NEW STYLES FOR STEP 4 & 5 */
-        .sidebar {
-            position: fixed; top: 50px; right: 0; width: 60px; height: 300px; background: #ddd;
-            display: flex; flex-direction: column; align-items: center; padding-top: 20px;
-        }
+        .logo { font-weight: 800; font-size: 24px; color: #0f172a; }
+        .nav-right { display: flex; gap: 20px; align-items: center; }
+        
+        /* Step 4 Target: Settings Icon */
         #settings-icon {
-            width: 40px; height: 40px; background: #555; border-radius: 50%; 
-            color: white; display: flex; align-items: center; justify-content: center;
+            width: 40px; height: 40px;
+            border-radius: 50%;
+            background: #f1f5f9;
+            display: flex; align-items: center; justify-content: center;
             cursor: pointer;
+            font-size: 20px;
+        }
+
+        /* HERO SECTION (Step 1 Target) */
+        .hero {
+            text-align: center;
+            padding: 100px 20px;
+            background: linear-gradient(to bottom, #fff, #f8fafc);
+        }
+        h1 { font-size: 48px; margin-bottom: 20px; color: #0f172a; }
+        p.subtitle { font-size: 18px; color: #64748b; margin-bottom: 40px; }
+        
+        /* Step 1 Target: Sign Up Button */
+        #signup-btn {
+            background-color: #2563eb;
+            color: white;
+            padding: 16px 32px;
+            font-size: 18px;
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);
+            transition: transform 0.2s;
+        }
+        #signup-btn:hover { transform: translateY(-2px); }
+
+        /* FEATURES GRID (Step 2 & 3 Targets) */
+        .grid-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            max-width: 1000px;
+            margin: 100px auto;
+            padding: 0 20px;
+        }
+        .card {
+            background: white;
+            padding: 40px;
+            border-radius: 16px;
+            border: 1px solid #e2e8f0;
+            min-height: 300px;
         }
         
-        #help-footer {
-            margin-top: 400px; text-align: center; border-top: 1px solid #ccc; padding-top: 20px;
+        /* Step 3 Target: Pricing Plan (Left Card) */
+        #pricing-plan {
+            border-top: 5px solid #059669;
         }
+        
+        /* Step 2 Target: Feature Section (Right Card) */
+        #feature-section {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f0f9ff;
+            border: 2px dashed #3b82f6;
+            color: #0369a1;
+            font-weight: bold;
+        }
+
+        /* FOOTER (Step 5 Target) */
+        .footer {
+            margin-top: 150px;
+            padding: 60px;
+            background: #1e293b;
+            color: white;
+            text-align: center;
+        }
+        
+        /* Step 5 Target: Help Button */
         #help-btn {
-            background: #e11d48; color: white; padding: 10px 20px; border-radius: 20px;
-            text-decoration: none; display: inline-block;
+            display: inline-block;
+            margin-top: 20px;
+            padding: 10px 24px;
+            background: #e11d48;
+            color: white;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
         }
     </style>
 </head>
 <body>
 
-    <h1>5-Step Tour Test</h1>
-    <p>Testing persistence and 5-step flow.</p>
+    <nav>
+        <div class="logo">SaaSify.</div>
+        <div class="nav-right">
+            <span>Dashboard</span>
+            <span>Profile</span>
+            <div id="settings-icon">⚙️</div>
+        </div>
+    </nav>
 
-    <button id="signup-btn">Sign Up Now</button>
+    <section class="hero">
+        <h1>Manage your workflow</h1>
+        <p class="subtitle">The best tool for developers to ship faster.</p>
+        
+        <button id="signup-btn">Get Started for Free</button>
+    </section>
 
-    <div class="sidebar">
-        <div id="settings-icon">⚙️</div>
-    </div>
+    <div class="grid-container">
+        <div id="pricing-plan" class="card">
+            <h2>Pro Plan</h2>
+            <p style="margin-top: 10px; color: #64748b;">$29 / month</p>
+            <p style="margin-top: 20px;">Everything you need to scale.</p>
+        </div>
 
-    <div align="right">
-        <div id="feature-section">
-            <strong>New Features</strong>
+        <div id="feature-section" class="card">
+            📊 New Analytics Dashboard
         </div>
     </div>
 
-    <div id="pricing-plan">
-        Premium Plan ($29/mo)
-    </div>
-
-    <div id="help-footer">
+    <div class="footer">
+        <p>Need assistance?</p>
         <a href="#" id="help-btn">Contact Support</a>
     </div>
 
