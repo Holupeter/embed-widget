@@ -22,8 +22,6 @@ export default function App({ shadowRoot, tourId }: AppProps) {
 
   const [coords, setCoords] = useState({ x: 0, y: 0 });
   const [isVisible, setIsVisible] = useState(true);
-  
-  // 1. NEW: Track if we are on mobile
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   if (!tourData || !tourData.steps) return null;
@@ -37,7 +35,6 @@ export default function App({ shadowRoot, tourId }: AppProps) {
   }, [index]);
 
   useEffect(() => {
-    // 2. NEW: Listen for screen resize to switch modes
     const handleResize = () => {
         setIsMobile(window.innerWidth < 768);
     };
@@ -46,12 +43,9 @@ export default function App({ shadowRoot, tourId }: AppProps) {
   }, []);
 
   useEffect(() => {
-    if (!step) return;
+    if (!step || isMobile) return; 
 
     const updatePosition = () => {
-      // 3. OPTIMIZATION: If mobile, don't waste CPU calculating positions
-      if (isMobile) return; 
-
       const target = document.querySelector(step.targetId);
       const tooltip = shadowRoot.getElementById('tour-card');
 
@@ -87,62 +81,87 @@ export default function App({ shadowRoot, tourId }: AppProps) {
 
   if (!isVisible) return null;
 
-  // 4. DYNAMIC STYLES: Switch between "Float" and "Bottom Sheet"
+  // --- STYLES (Fixed: No x/y here) ---
   const desktopStyle = {
     position: 'absolute' as const,
     left: 0,
     top: 0,
-    x: coords.x,
-    y: coords.y,
     width: '320px',
+    borderRadius: '16px',
   };
 
   const mobileStyle = {
     position: 'fixed' as const,
-    left: '50%',
-    bottom: '20px',
-    x: '-50%', // Centers it horizontally
-    y: 0, // No vertical offset needed, it's pinned to bottom
-    width: '90vw', // 90% of screen width
-    maxWidth: '350px', // But never huge
+    left: '16px',
+    right: '16px',
+    bottom: '24px',
+    width: 'auto',
+    borderRadius: '20px',
+    transform: 'none', 
   };
 
   return (
     <>
       <style>{`
-        .btn { cursor: pointer; border: none; padding: 10px 16px; border-radius: 8px; font-weight: 600; font-size: 14px; transition: opacity 0.2s; }
-        .btn-primary { background: #111; color: white; }
-        .btn-primary:hover { opacity: 0.9; }
-        .btn-back { background: transparent; color: #666; }
-        .btn-back:hover { background: #f0f0f0; }
-        .btn-skip { background: transparent; color: #999; font-size: 13px; margin-right: auto; }
-        .btn-skip:hover { color: #666; }
+        .btn { 
+          cursor: pointer; border: none; padding: 12px 16px; border-radius: 10px; 
+          font-weight: 600; font-size: 14px; transition: all 0.2s; 
+          display: inline-flex; justify-content: center; align-items: center;
+        }
+        .btn-primary { background: #0f172a; color: white; box-shadow: 0 4px 12px rgba(15, 23, 42, 0.2); }
+        .btn-primary:active { transform: scale(0.98); }
         
-        .progress-track { width: 100%; height: 4px; background: #f0f0f0; border-radius: 2px; margin-bottom: 20px; overflow: hidden; }
-        .progress-fill { height: 100%; background: #2563eb; transition: width 0.3s ease; }
+        .btn-back { background: transparent; color: #64748b; }
+        .btn-back:hover { background: #f1f5f9; color: #334155; }
         
-        h3 { margin: 0 0 10px; font-size: 18px; fontWeight: 700; }
-        p { margin: 0 0 24px; color: #666; lineHeight: 1.6; fontSize: 15px; }
+        .btn-skip { background: transparent; color: #94a3b8; font-size: 13px; margin-right: auto; }
+        .btn-skip:hover { color: #64748b; }
+
+        .progress-track { 
+          width: 100%; height: 4px; background: #f1f5f9; border-radius: 2px; 
+          margin-bottom: 20px; overflow: hidden; 
+        }
+        .progress-fill { 
+          height: 100%; background: #3b82f6; transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1); 
+        }
+
+        h3 { margin: 0 0 8px; font-size: 18px; font-weight: 700; color: #1e293b; }
+        p { margin: 0 0 24px; color: #475569; line-height: 1.6; font-size: 15px; }
+
+        /* Mobile specific adjustments to make buttons fit */
+        @media (max-width: 480px) {
+          .btn { padding: 12px 10px; font-size: 13px; } 
+          /* Ensure Skip doesn't get squashed */
+          .btn-skip { margin-right: 10px; font-size: 12px; }
+        }
       `}</style>
       
       <AnimatePresence mode='wait'>
         <motion.div 
           id="tour-card"
-          // 5. ANIMATION: Adjust entrance direction based on device
-          initial={{ opacity: 0, scale: 0.95, y: isMobile ? 50 : 10, x: isMobile ? '-50%' : 0 }}
+          // Animation Logic
+          initial={ isMobile ? { y: 100, opacity: 0 } : { opacity: 0, scale: 0.95 } }
           animate={{ 
             opacity: 1, 
             scale: 1, 
-            ...(isMobile ? mobileStyle : desktopStyle) // Apply the correct style object
+            // 1. We switch the layout mode
+            ...(isMobile ? mobileStyle : desktopStyle),
+            // 2. We handle Coordinates here (Solving the red flag!)
+            x: isMobile ? 0 : coords.x,
+            y: isMobile ? 0 : coords.y,
           }}
-          exit={{ opacity: 0, scale: 0.95, y: 10 }}
-          transition={{ type: "spring", stiffness: 100, damping: 20, mass: 1 }}
+          exit={ isMobile ? { y: 100, opacity: 0 } : { opacity: 0, scale: 0.95 } }
+          transition={{ type: "spring", stiffness: 100, damping: 20 }}
           style={{ 
-            background: '#fff', color: '#333', padding: '24px',
-            borderRadius: '20px', 
-            boxShadow: '0 20px 60px -10px rgba(0,0,0,0.2)',
-            fontFamily: 'Inter, system-ui, sans-serif', 
-            zIndex: 99999,
+            background: 'rgba(255, 255, 255, 0.98)', 
+            backdropFilter: 'blur(12px)',
+            WebkitBackdropFilter: 'blur(12px)',
+            color: '#333', 
+            padding: '24px',
+            boxShadow: '0 20px 60px -12px rgba(0,0,0,0.25), 0 0 1px rgba(0,0,0,0.1)',
+            fontFamily: 'Inter, -apple-system, sans-serif', 
+            zIndex: 999999,
+            border: '1px solid rgba(0,0,0,0.05)',
           }}
         >
           <div className="progress-track">
@@ -161,7 +180,9 @@ export default function App({ shadowRoot, tourId }: AppProps) {
           </motion.div>
           
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              {/* Skip Button is now ALWAYS visible, even on mobile */}
               <button className="btn btn-skip" onClick={finishTour}>Skip</button>
+              
               <button 
                   className="btn btn-back" 
                   onClick={() => setIndex(prev => prev - 1)}
