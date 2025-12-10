@@ -1,36 +1,105 @@
-// src/useTourData.ts
-import { useState } from 'react'; // Removed 'useEffect'
-import { MOCK_TOUR } from './mockData';
+import { useState } from 'react'; // FIXED: Removed 'useEffect'
 
-// --- INSTRUCTIONS FOR TEAM ---
-// 1. Install Convex: npm install convex
-// 2. Import your API: import { api } from "../../convex/_generated/api";
-// 3. Import useEffect above.
-// 4. Uncomment the "Real Data" section below.
-// -----------------------------
+// --- DATA STRUCTURES (MATCHING THE DOCS) ---
+
+export interface Step {
+  _id: string;
+  tourId: string;
+  stepId: string;
+  title: string;
+  content: string;
+  targetSelector: string;
+  position: "top" | "bottom" | "left" | "right";
+  order: number;
+}
+
+export interface TourConfig {
+  _id: string;
+  name: string;
+  status: "draft" | "active" | "paused";
+  theme: {
+    primaryColor: string;
+    backgroundColor: string;
+    textColor: string;
+    borderRadius: number;
+    overlayEnabled: boolean;
+    overlayOpacity: number;
+  };
+  targeting: {
+    urlMatchType: "exact" | "contains" | "regex";
+    urlPattern: string;
+    frequency: "once" | "session" | "always";
+  };
+  steps: Step[];
+}
+
+// --- MOCK DATA ---
+const MOCK_DATA: TourConfig = {
+  _id: "demo-tour-123",
+  name: "Onboarding Demo",
+  status: "active",
+  theme: {
+    primaryColor: "#2563eb",
+    backgroundColor: "#ffffff",
+    textColor: "#1e293b",
+    borderRadius: 16,
+    overlayEnabled: true,
+    overlayOpacity: 0.5
+  },
+  targeting: {
+    urlMatchType: "contains",
+    urlPattern: "/",
+    frequency: "always"
+  },
+  steps: [
+    { _id: "s1", tourId: "t1", stepId: "step_1", order: 0, title: "👋 Welcome", content: "Start your journey here.", targetSelector: "#signup-btn", position: "bottom" },
+    { _id: "s2", tourId: "t1", stepId: "step_2", order: 1, title: "📊 Analytics", content: "Track your growth.", targetSelector: "#feature-section", position: "right" },
+    { _id: "s3", tourId: "t1", stepId: "step_3", order: 2, title: "💎 Pricing", content: "Choose a plan.", targetSelector: "#pricing-plan", position: "left" },
+    { _id: "s4", tourId: "t1", stepId: "step_4", order: 3, title: "⚙️ Settings", content: "Configure your profile.", targetSelector: "#settings-icon", position: "bottom" },
+    { _id: "s5", tourId: "t1", stepId: "step_5", order: 4, title: "❓ Support", content: "We are here to help.", targetSelector: "#help-btn", position: "top" }
+  ]
+};
+
+// --- TEAM INSTRUCTIONS ---
+// 1. Uncomment Convex imports
+// 2. Uncomment 'useQuery', 'useEffect', and 'shouldShowTour' logic below
+// -------------------------
 
 // import { useQuery } from "convex/react";
-// import { api } from "../convex/_generated/api"; 
+// import { api } from "../convex/_generated/api";
 
-// We use '_tourId' with an underscore to stop TypeScript complaining it's unused.
-// When you uncomment the real code, remove the underscore.
-export function useTourData(_tourId: string) {
+// FIXED: Added underscores to arguments so TS doesn't complain they are unused
+export function useTourData(_tourId: string, _apiKey?: string) {
   
-  // OPTION A: MOCK DATA (Current Mode)
-  // We only grab 'data' because we aren't updating it in Mock mode.
-  const [data] = useState(MOCK_TOUR);
+  // FIXED: Removed 'setData' since we aren't using it in Mock Mode
+  const [data] = useState<TourConfig | null>(MOCK_DATA);
 
-  // OPTION B: REAL DATA SWITCH (Uncomment when Backend is ready)
+  // --- LOGIC: HELPER FUNCTIONS (Uncomment when switching to Real Data) ---
   /*
-  // Add 'setData' back to the line above: const [data, setData] = useState(MOCK_TOUR);
-  
-  const realTour = useQuery(api.widget.getTour, { tourId: _tourId });
+  const shouldShowTour = (targeting: any, currentUrl: string) => {
+    if (!targeting?.urlPattern) return true;
+    if (targeting.urlMatchType === "contains") return currentUrl.includes(targeting.urlPattern);
+    return true;
+  };
+  */
+
+  // --- LOGIC: REAL DATA FETCHING (Uncomment when Backend is ready) ---
+  /*
+  const realTour = useQuery(api.tours.get, { tourId: _tourId });
+  const realSteps = useQuery(api.steps.list, { tourId: _tourId });
+
+  // Note: Add 'useEffect' back to imports above
+  // Note: Add 'setData' back to useState above
   
   useEffect(() => {
-    if (realTour) {
-      setData(realTour);
+    if (realTour && realSteps) {
+       const fullConfig = { ...realTour, steps: realSteps };
+       
+       if (shouldShowTour(fullConfig.targeting, window.location.href)) {
+         setData(fullConfig);
+       }
     }
-  }, [realTour]);
+  }, [realTour, realSteps]);
   */
 
   return data;
